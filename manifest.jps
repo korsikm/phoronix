@@ -1,0 +1,129 @@
+jpsType: install
+jpsVersion: 1.4
+name: Phoronix Perfomance Test
+logo: http://www.phoronix-test-suite.com/img/ptsLogo.png
+homepage: http://www.phoronix-test-suite.com/
+baseUrl: https://phoronix-test-suite.com/releases/
+description: Open-Source, Automated Benchmarking
+skipNodeEmails: true
+
+settings:
+  fields:
+    - type: list
+      caption: Phoronix Version
+      name: versionPhoronix
+      default: 8.2.0
+      required: true
+      values:
+        "7.8.0": 7.8.0
+        "8.2.0": 8.2.0
+        "8.4.1": 8.4.1
+    - type: checkbox
+      caption: Test CPU
+      name: testCpu
+      value: true
+      hideLabel: false
+    - type: checkbox
+      caption: Test RAM
+      name: testRam
+      value: true
+      hideLabel: false
+    - type: checkbox
+      caption: Test HDD
+      name: testHdd
+      value: true
+      hideLabel: false
+      
+nodes:
+- count: 1
+  fixedCloudlets: 9
+  flexibleCloudlets: 10
+  nodeType: centos7
+  nodeGroup: vds
+  port: 22
+
+
+onInstall:
+  - installPhoronix
+  - if ( ${settings.testCpu} ):
+        runCpuTest
+  - if ( ${settings.testRam} ):
+        runRamTest
+  - if ( ${settings.testHdd} ):
+        runHddTest
+  - getResult
+  - stopPhoronix
+    
+actions:
+  installPhoronix:
+    - cmd [centos7]: yum install -y epel-release php-cli php-xml jsoup gcc gcc-c++ jq make autoconf automake curl glibc-static patch unzip bzip2 expat-devel libaio-devel >/dev/null 2>&1
+    - cmd [centos7]: wget ${baseUrl}/phoronix-test-suite-${settings.versionPhoronix}.tar.gz -qO - | tar xz -C /root
+    - cmd [centos7]: mkdir -p /var/cache/phoronix-test-suite/download-cache
+    - cmd [centos7]: wget -qO /var/cache/phoronix-test-suite/download-cache/c-ray-1.1.tar.gz http://www.phoronix-test-suite.com/benchmark-files/c-ray-1.1.tar.gz >/dev/null
+    - cmd [centos7]: wget -qO /var/cache/phoronix-test-suite/download-cache/ramsmp-3.5.0.tar.gz  http://sources.buildroot.net/ramsmp-3.5.0.tar.gz >/dev/null
+    - cmd [centos7]: wget -qO /var/cache/phoronix-test-suite/download-cache/fio-3.1.tar.gz http://brick.kernel.dk/snaps/fio-3.1.tar.gz >/dev/null
+    - cmd [centos7]: /root/phoronix-test-suite/phoronix-test-suite install pts/ramspeed >/var/log/install_ramspeed.log
+    - cmd [centos7]: /root/phoronix-test-suite/phoronix-test-suite install pts/fio >/var/log/install_fio.log
+    - cmd [centos7]: /root/phoronix-test-suite/phoronix-test-suite install pts/c-ray-1.1.0 >/var/log/install_cray.log
+    - cmd [centos7]: date +"%d/%m/%y %H:%M:%S" > /tmp/test_started
+  runCpuTest:
+    - cmd [centos7]: echo -e "n\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/c-ray-1.1.0 > /root/cpu_test
+  runRamTest:
+    - cmd [centos7]: echo -e "5\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed > /root/ram_test
+    - cmd [centos7]: echo -e "5\n2\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed >> /root/ram_test
+  runHddTest:
+    - cmd [centos7]: echo -e "1\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio > /root/disk_test
+    - cmd [centos7]: echo -e "2\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio >> /root/disk_test
+  getResult:
+    # Run web server with results
+    - cmd [centos7]:
+        - mkdir -p /var/www/html
+        - echo -n 'CPU - ' > /var/www/html/result.html
+        - echo Y2F0IC9yb290L2NwdV90ZXN0IHxncmVwIEF2ZXJhZ2U6IHwgY3V0IC1kOiAtZjIgfCBhd2sgJ3twcmludCAkMX0nIHwgc2VkICdzL1tbOnNwYWNlOl1dLy9nJyB8ICBzZWQgInMsXHgxQlxbWzAtOTtdKlthLXpBLVpdLCxnIg== | base64 -d | bash >> /var/www/html/result.html
+        - echo -n 'HDD - ' >> /var/www/html/result.html
+        - echo Y2F0IC9yb290L2Rpc2tfdGVzdCB8Z3JlcCBBdmVyYWdlOiB8IGN1dCAtZDogLWYyIHwgc2VkICdzL1tbOnNwYWNlOl1dLy9nJyB8ICBzZWQgInMsXHgxQlxbWzAtOTtdKlthLXpBLVpdLCxnIiB8IHNlZCAncy9LQlwvcy8gMTAyNC8nIHwgc2VkICdzL01CXC9zLyAxMDQ1ODc2LycgfCB0ciAiXG4iICIgIiB8IGF3ayAne1JFU1VMVD0oJDEqJDIrJDMqJDQpLzIgLzEwNDU4NzY7IHByaW50IFJFU1VMVH0n | base64 -d | bash >> /var/www/html/result.html
+        - echo -n 'RAM - ' >> /var/www/html/result.html
+        - echo Y2F0IC9yb290L3JhbV90ZXN0IHxncmVwIEF2ZXJhZ2U6IHwgY3V0IC1kOiAtZjIgfCBzZWQgJ3MvW1s6c3BhY2U6XV0vL2cnIHwgIHNlZCAicyxceDFCXFtbMC05O10qW2EtekEtWl0sLGciIHwgc2VkICdzL0tCXC9zLyAxMDI0LycgfCBzZWQgJ3MvTUJcL3MvIDEwNDU4NzYvJyB8IHRyICJcbiIgIiAiIHwgYXdrICd7UkVTVUxUPSgkMSokMiskMyokNCkvMiAvMTA0NTg3NjsgcHJpbnQgUkVTVUxUfSc= | base64 -d | bash >> /var/www/html/result.html
+        - echo c2NyZWVuIC1kbVMgV0VCU0VSVkVSIHBocCAtUyAwLjAuMC4wOjgwIC10IC92YXIvd3d3L2h0bWw= | base64 -d | bash
+    - cmd [centos7]: echo 'CHECK RESULT URL http://'$(hostname)/result.html
+    - cmd [centos7]: echo Y2F0IC9yb290L2NwdV90ZXN0IHxncmVwIEF2ZXJhZ2U6IHwgY3V0IC1kOiAtZjIgfCBhd2sgJ3twcmludCAkMX0nIHwgc2VkICdzL1tbOnNwYWNlOl1dLy9nJyB8ICBzZWQgInMsXHgxQlxbWzAtOTtdKlthLXpBLVpdLCxnIg== | base64 -d | bash
+    - setGlobals:
+        valCpu: ${response.out}
+    - cmd [centos7]: echo Y2F0IC9yb290L3JhbV90ZXN0IHxncmVwIEF2ZXJhZ2U6IHwgY3V0IC1kOiAtZjIgfCBzZWQgJ3MvW1s6c3BhY2U6XV0vL2cnIHwgIHNlZCAicyxceDFCXFtbMC05O10qW2EtekEtWl0sLGciIHwgc2VkICdzL0tCXC9zLyAxMDI0LycgfCBzZWQgJ3MvTUJcL3MvIDEwNDU4NzYvJyB8IHRyICJcbiIgIiAiIHwgYXdrICd7UkVTVUxUPSgkMSokMiskMyokNCkvMiAvMTA0NTg3NjsgcHJpbnQgUkVTVUxUfSc= | base64 -d | bash
+    - setGlobals:
+        valRam: ${response.out}
+    - cmd [centos7]: echo Y2F0IC9yb290L2Rpc2tfdGVzdCB8Z3JlcCBBdmVyYWdlOiB8IGN1dCAtZDogLWYyIHwgc2VkICdzL1tbOnNwYWNlOl1dLy9nJyB8ICBzZWQgInMsXHgxQlxbWzAtOTtdKlthLXpBLVpdLCxnIiB8IHNlZCAncy9LQlwvcy8gMTAyNC8nIHwgc2VkICdzL01CXC9zLyAxMDQ1ODc2LycgfCB0ciAiXG4iICIgIiB8IGF3ayAne1JFU1VMVD0oJDEqJDIrJDMqJDQpLzIgLzEwNDU4NzY7IHByaW50IFJFU1VMVH0n | base64 -d | bash
+    - setGlobals:
+        valHdd: ${response.out}
+    - cmd [centos7]: cat /tmp/test_started
+    - setGlobals:
+        valDate: ${response.out}
+    - log:
+         RESULTS [ ${env.region} ] CPU - ${globals.valCpu} HDD - ${globals.valHdd} RAM - ${globals.valRam} 
+  stopPhoronix:
+    - jelastic.environment.control.StopEnv:
+        appid: ${env.appid}
+
+    
+success:
+   email: |
+     ### Phoronix Test Finished     
+     **Started** ${globals.valDate}     
+     **Region** ${env.region}      
+     **Domain** ${env.domain}      
+           
+     * CPU ${globals.valCpu} sec
+     * RAM ${globals.valRam} MB/sec
+     * HDD ${globals.valHdd} MB/sec
+   text: |
+     ### Phoronix Test Finished     
+     **Started** ${globals.valDate}     
+     **Region** ${env.region}      
+     **Domain** ${env.domain}      
+           
+     * CPU ${globals.valCpu} sec
+     * RAM ${globals.valRam} MB/sec
+     * HDD ${globals.valHdd} MB/sec
+
+# 0.1
+# 23/04/2019
