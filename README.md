@@ -1,6 +1,6 @@
 # Jelastic Platform Performance Benchmark
 
-Phoronix Test Suite itself is an open source platform for conducting automated tests, as well as for reporting test results regarding ther Platform performance.
+Phoronix Test Suite is an open source platform for conducting automated tests, as well as for reporting test results regarding ther Platform performance.
   
   Import the required manifest using the link from GitHub: [https://github.com/jelastic-jps/phoronix/blob/master/manifest.jps](https://github.com/jelastic-jps/phoronix/blob/master/manifest.jps)
   
