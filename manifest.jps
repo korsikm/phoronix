@@ -40,7 +40,7 @@ nodes:
   nodeType: centos7
   nodeGroup: vds
   port: 22
-
+  extip: true
 
 onInstall:
   - installPhoronix
