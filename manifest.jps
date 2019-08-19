@@ -80,7 +80,7 @@ actions:
         echo -n 'RAM - ' >> /var/www/html/result.html
         grep 'Average:' /root/ram_test | cut -d: -f2 | sed 's/[[:space:]]//g' |  sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" | sed 's/KB\/s/ 1000/' | sed 's/MB\/s/ 1000000/' | tr "\n" " " | awk '{RESULT=($1*$2+$3*$4)/2 /1000000; print RESULT}' >> /var/www/html/result.html
         echo -n 'Disk - ' >> /var/www/html/result.html
-        grep 'Average:' /root/disk_test | cut -d: -f2 | sed 's/[[:space:]]//g' |  sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" | sed 's/KB\/s/ 1000/' | sed 's/MB\/s/ 1000000/' | tr "\n" " " | awk '{RESULT=($1*$2+$3*$4)/2 /1000000; print RESULT}' >> /var/www/html/result.html
+        grep 'Average:' /root/disk_test | grep -v IOPS | cut -d: -f2 | sed 's/[[:space:]]//g' |  sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" | sed 's/KB\/s/ 1000/' | sed 's/MB\/s/ 1000000/' | tr "\n" " " | awk '{RESULT=($1*$2+$3*$4)/2 /1000000; print RESULT}' >> /var/www/html/result.html
         chmod 0777 /var/run/screen
         screen -dmS WEBSERVER php -S 0.0.0.0:80 -t /var/www/html
         echo 'CHECK RESULT URL http://'$(hostname)/result.html
@@ -94,7 +94,7 @@ actions:
     - setGlobals:
         ram: ${response.out}
     - cmd [centos7]: |-
-       grep 'Average:' /root/disk_test | cut -d: -f2 | sed 's/[[:space:]]//g' |  sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" | sed 's/KB\/s/ 1000/' | sed 's/MB\/s/ 1000000/' | tr "\n" " " | awk '{RESULT=($1*$2+$3*$4)/2 /1000000; print RESULT}'
+       grep 'Average:' /root/disk_test | grep -v IOPS | cut -d: -f2 | sed 's/[[:space:]]//g' |  sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" | sed 's/KB\/s/ 1000/' | sed 's/MB\/s/ 1000000/' | tr "\n" " " | awk '{RESULT=($1*$2+$3*$4)/2 /1000000; print RESULT}'
     - setGlobals:
         disk: ${response.out}
     - cmd [centos7]: cat /tmp/test_started
