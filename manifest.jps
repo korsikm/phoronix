@@ -1,6 +1,6 @@
 type: install
 version: 1.4
-name: Phoronix Perfomance Test
+name: Phoronix Performance Test
 logo: http://www.phoronix-test-suite.com/img/ptsLogo.png
 homepage: http://www.phoronix-test-suite.com/
 baseUrl: https://phoronix-test-suite.com/releases/
