@@ -7,15 +7,19 @@ baseUrl: https://phoronix-test-suite.com/releases/
 description: Open-Source, Automated Benchmarking
 skipNodeEmails: true
 
+globals:
+  vCray: 1.1.0
+  vRamspeed: 1.4.3
+  vFio: 1.13.2
+  
 settings:
   fields:
     - type: list
       caption: Phoronix Version
       name: versionPhoronix
-      default: 8.2.0
+      default: 8.4.1
       required: true
       values:
-        "7.8.0": 7.8.0
         "8.2.0": 8.2.0
         "8.4.1": 8.4.1
     - type: checkbox
@@ -59,18 +63,18 @@ actions:
       wget -qO /var/cache/phoronix-test-suite/download-cache/c-ray-1.1.tar.gz http://www.phoronix-test-suite.com/benchmark-files/c-ray-1.1.tar.gz >/dev/null
       wget -qO /var/cache/phoronix-test-suite/download-cache/ramsmp-3.5.0.tar.gz  http://sources.buildroot.net/ramsmp-3.5.0.tar.gz >/dev/null
       wget -qO /var/cache/phoronix-test-suite/download-cache/fio-3.1.tar.gz http://brick.kernel.dk/snaps/fio-3.1.tar.gz >/dev/null
-      /root/phoronix-test-suite/phoronix-test-suite install pts/ramspeed >/var/log/install_ramspeed.log
-      /root/phoronix-test-suite/phoronix-test-suite install pts/fio >/var/log/install_fio.log
-      /root/phoronix-test-suite/phoronix-test-suite install pts/c-ray-1.1.0 >/var/log/install_cray.log
+      /root/phoronix-test-suite/phoronix-test-suite install pts/ramspeed-${globals.vRamspeed} >/var/log/install_ramspeed.log
+      /root/phoronix-test-suite/phoronix-test-suite install pts/fio-${globals.vFio} >/var/log/install_fio.log
+      /root/phoronix-test-suite/phoronix-test-suite install pts/c-ray-${globals.vCray} >/var/log/install_cray.log
        date +"%d/%m/%y %H:%M:%S" > /tmp/test_started
   runCpuTest:
-    - cmd [centos7]: echo -e "n\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/c-ray-1.1.0 > /root/cpu_test
+    - cmd [centos7]: echo -e "n\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/c-ray-${globals.vCray} > /root/cpu_test
   runRamTest:
-    - cmd [centos7]: echo -e "5\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed > /root/ram_test
-    - cmd [centos7]: echo -e "5\n2\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed >> /root/ram_test
+    - cmd [centos7]: echo -e "5\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed-${globals.vRamspeed} > /root/ram_test
+    - cmd [centos7]: echo -e "5\n2\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/ramspeed-${globals.vRamspeed} >> /root/ram_test
   runDiskTest:
-    - cmd [centos7]: echo -e "1\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio > /root/disk_test
-    - cmd [centos7]: echo -e "2\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio >> /root/disk_test
+    - cmd [centos7]: echo -e "1\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio-${globals.vFio} > /root/disk_test
+    - cmd [centos7]: echo -e "2\n3\n2\n2\n1\nn\n" | /root/phoronix-test-suite/phoronix-test-suite run pts/fio-${globals.vFio} >> /root/disk_test
   getResult:
     # Run web server with results
     - cmd [centos7]: |-
