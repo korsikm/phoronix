@@ -1,4 +1,5 @@
 type: install
+id: phoronix
 version: 1.4
 name: Phoronix Performance Test
 logo: http://www.phoronix-test-suite.com/img/ptsLogo.png
